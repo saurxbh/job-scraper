@@ -1,4 +1,4 @@
-package com.jobscrapper.job_scrapper;
+package com.jobscraper.job_scraper;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

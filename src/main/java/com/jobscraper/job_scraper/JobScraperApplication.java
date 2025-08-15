@@ -1,13 +1,13 @@
-package com.jobscrapper.job_scrapper;
+package com.jobscraper.job_scraper;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class JobScrapperApplication {
+public class JobScraperApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(JobScrapperApplication.class, args);
+		SpringApplication.run(JobScraperApplication.class, args);
 	}
 
 }
