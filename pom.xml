@@ -8,11 +8,11 @@
 		<version>3.5.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.jobscraper</groupId>
-	<artifactId>job-scraper</artifactId>
+	<groupId>com.jobscrapper</groupId>
+	<artifactId>job-scrapper</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>job-scraper</name>
-	<description>Job scraper Application</description>
+	<name>job-scrapper</name>
+	<description>Job Scrapper Application</description>
 	<url/>
 	<licenses>
 		<license/>
