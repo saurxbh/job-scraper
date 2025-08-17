@@ -3,7 +3,6 @@ package com.jobscraper.job_scraper.service;
 import com.jobscraper.job_scraper.entity.Company;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.LoadState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,11 +38,11 @@ public class JobScraperService {
     private void scrapeCompany(Company company, Page page) {
         try {
             String storedUrl = company.getCareerPageUrl();
-
+            String selector = company.getSelector();
             System.out.println("Scraping: " + company.getName() + " | " + storedUrl);
 
             page.navigate(storedUrl);
-            page.waitForSelector("a.vacancies-list-item__link");
+            page.waitForSelector(selector);
 
             // Scroll to bottom to ensure lazy-loaded jobs appear
             int prevHeight = 0;
@@ -57,17 +56,31 @@ public class JobScraperService {
             }
 
             // Example selectors - replace with custom per-company later
-            List<String> jobTitles = page.locator("a.vacancies-list-item__link").allInnerTexts();
-            //List<String> jobUrls = page.locator("a.vacancies-list-item__link");
+            Locator jobs = page.locator(selector);
+            int jobCount = jobs.count();
+            System.out.println("Jobs found for " + company.getName() + ": " + jobCount);
 
-            System.out.println("Jobs found for " + company.getName() + ": " + jobTitles.size());
-            for (int i = 0; i < jobTitles.size(); i++) {
-                System.out.println(jobTitles.get(i));
+            for (int i = 0; i < jobCount; i++) {
+                String title = jobs.nth(i).innerText();
+                if (title.matches("(?i).*\\b(Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security)\\b.*")) continue;
+
+                String url = jobs.nth(i).getAttribute("href");
+                if (url.startsWith("/")) url = processUrl(url, storedUrl);
+                System.out.println(title + " -> " + url);
             }
 
         } catch (Exception e) {
             System.err.println("Failed to scrape " + company.getCareerPageUrl());
             e.printStackTrace();
         }
+    }
+
+    private String processUrl(String url, String storedUrl) {
+        int idx = storedUrl.indexOf("/", storedUrl.indexOf("//") + 2);
+        String baseUrl = idx != -1 ? storedUrl.substring(0, idx) : storedUrl;
+
+        url = url.substring(1);
+
+        return baseUrl + "/" + url;
     }
 }
