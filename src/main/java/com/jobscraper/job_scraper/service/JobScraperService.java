@@ -1,7 +1,9 @@
 package com.jobscraper.job_scraper.service;
 
 import com.jobscraper.job_scraper.entity.Company;
+import com.jobscraper.job_scraper.entity.Job;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
+import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,8 +16,8 @@ public class JobScraperService {
     @Autowired
     private CompanyRepository companyRepository;
 
-//    @Autowired
-//    private JobPostingRepository jobPostingRepository;
+    @Autowired
+    private JobRepository jobRepository;
 
     public void scrapeAllCompanies() {
         List<Company> companies = companyRepository.findAll();
@@ -38,11 +40,12 @@ public class JobScraperService {
     private void scrapeCompany(Company company, Page page) {
         try {
             String storedUrl = company.getCareerPageUrl();
-            String selector = company.getSelector();
+            String textSelector = company.getTextSelector();
+            String linkSelector = company.getLinkSelector();
             System.out.println("Scraping: " + company.getName() + " | " + storedUrl);
 
             page.navigate(storedUrl);
-            page.waitForSelector(selector);
+            page.waitForSelector(textSelector);
 
             // Scroll to bottom to ensure lazy-loaded jobs appear
             int prevHeight = 0;
@@ -56,17 +59,29 @@ public class JobScraperService {
             }
 
             // Example selectors - replace with custom per-company later
-            Locator jobs = page.locator(selector);
-            int jobCount = jobs.count();
-            System.out.println("Jobs found for " + company.getName() + ": " + jobCount);
+            Locator jobTitles = page.locator(textSelector);
+            Locator jobLinks = page.locator(linkSelector);
+            int jobCount = jobTitles.count();
+            int linksCount = jobLinks.count();
+            System.out.println("Jobs found for " + company.getName() + ": " + jobCount + ", " + linksCount + " links.");
 
             for (int i = 0; i < jobCount; i++) {
-                String title = jobs.nth(i).innerText();
-                if (title.matches("(?i).*\\b(Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security)\\b.*")) continue;
+                String title = jobTitles.nth(i).innerText();
+                if (title.matches("(?i).*(PhD|Research|Director|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist).*")) continue;
 
-                String url = jobs.nth(i).getAttribute("href");
+                String url = jobLinks.nth(i).getAttribute("href");
                 if (url.startsWith("/")) url = processUrl(url, storedUrl);
-                System.out.println(title + " -> " + url);
+
+                if (!jobRepository.existsByJobUrl(url)) {
+                    Job job = new Job();
+                    job.setCompany(company);
+                    job.setTitle(title);
+                    job.setJobUrl(url);
+                    //job.setScrapedAt(LocalDateTime.now());
+
+                    jobRepository.save(job);
+                    System.out.println("Saved: " + title + " -> " + url);
+                }
             }
 
         } catch (Exception e) {
