@@ -31,7 +31,7 @@ public class AlertService {
         }
 
         // 2. Build the alert message
-        StringBuilder message = new StringBuilder("New Jobs:\n\n");
+        StringBuilder message = new StringBuilder("URGENT: These are the jobs posted in the last 30 minutes. Apply immediately!!!\n\n");
         for (Job job : newJobs) {
             message.append(job.getTitle())
                     .append(" :: ").append(job.getCompany())
