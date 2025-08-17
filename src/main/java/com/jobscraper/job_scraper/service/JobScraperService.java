@@ -80,7 +80,6 @@ public class JobScraperService {
                     //job.setScrapedAt(LocalDateTime.now());
 
                     jobRepository.save(job);
-                    System.out.println("Saved: " + title + " -> " + url);
                 }
             }
 

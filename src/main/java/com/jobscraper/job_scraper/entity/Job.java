@@ -15,7 +15,11 @@ public class Job {
 
     private String title;
 
+    @Column(unique = true, length = 1000)
     private String jobUrl;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean alerted;
 
     // Constructors
     public Job() {}
@@ -42,4 +46,12 @@ public class Job {
     public String getJobUrl() { return jobUrl; }
 
     public void setJobUrl(String jobUrl) { this.jobUrl = jobUrl; }
+
+    public boolean isAlerted() {
+        return alerted;
+    }
+
+    public void setAlerted(boolean alerted) {
+        this.alerted = alerted;
+    }
 }

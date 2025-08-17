@@ -56,4 +56,9 @@ public class Company {
     public void setLinkSelector(String linkSelector) {
         this.linkSelector = linkSelector;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
