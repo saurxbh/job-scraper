@@ -11,18 +11,22 @@ public class Company {
 
     private String name;
 
+    @Column(length = 1000)
     private String careerPageUrl;
 
-    private String selector; // CSS selector for job links
+    private String textSelector; // CSS selector for job links
+    private String linkSelector; // Could be different, same for most cases
 
     // Constructors
     public Company() {}
 
-    public Company(String name, String careerPageUrl, String selector) {
+    public Company(String name, String careerPageUrl, String textSelector, String linkSelector) {
         this.name = name;
         this.careerPageUrl = careerPageUrl;
-        this.selector = selector;
+        this.textSelector = textSelector;
+        this.linkSelector = linkSelector;
     }
+
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -37,7 +41,19 @@ public class Company {
 
     public void setCareerPageUrl(String careerPageUrl) { this.careerPageUrl = careerPageUrl; }
 
-    public String getSelector() { return selector; }
+    public String getTextSelector() {
+        return textSelector;
+    }
 
-    public void setSelector(String selector) { this.selector = selector; }
+    public void setTextSelector(String textSelector) {
+        this.textSelector = textSelector;
+    }
+
+    public String getLinkSelector() {
+        return linkSelector;
+    }
+
+    public void setLinkSelector(String linkSelector) {
+        this.linkSelector = linkSelector;
+    }
 }
