@@ -4,6 +4,7 @@ import com.jobscraper.job_scraper.entity.Job;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class AlertService {
     }
 
     @Transactional
+    @Scheduled(fixedRate = 40 * 60 * 1000, initialDelay = 20 * 60 * 1000)
     public void sendAlertsForNewJobs() {
         // 1. Fetch jobs not yet alerted
         List<Job> newJobs = jobRepository.findByAlertedFalse();
@@ -29,6 +31,8 @@ public class AlertService {
             System.out.println("No new jobs to alert.");
             return;
         }
+
+        System.out.println(newJobs.size() + " new jobs found.");
 
         // 2. Build the alert message
         StringBuilder message = new StringBuilder("URGENT: These are the jobs posted in the last 30 minutes. Apply immediately!!!\n\n");

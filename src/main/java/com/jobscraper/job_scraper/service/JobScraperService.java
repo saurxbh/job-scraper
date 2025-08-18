@@ -6,6 +6,7 @@ import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,9 +20,10 @@ public class JobScraperService {
     @Autowired
     private JobRepository jobRepository;
 
+    @Scheduled(fixedRate = 40 * 60 * 1000)
     public void scrapeAllCompanies() {
         List<Company> companies = companyRepository.findAll();
-        System.out.println(companies.size());
+        System.out.println("Scraping for " + companies.size() + " companies.");
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -42,7 +44,7 @@ public class JobScraperService {
             String storedUrl = company.getCareerPageUrl();
             String textSelector = company.getTextSelector();
             String linkSelector = company.getLinkSelector();
-            System.out.println("Scraping: " + company.getName() + " | " + storedUrl);
+            System.out.println("Scraping: " + company.getName());
 
             page.navigate(storedUrl);
             page.waitForSelector(textSelector);
