@@ -69,7 +69,7 @@ public class JobScraperService {
 
             for (int i = 0; i < jobCount; i++) {
                 String title = jobTitles.nth(i).innerText();
-                if (title.matches("(?i).*(PhD|Research|Director|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist).*")) continue;
+                if (title.matches("(?i).*(Mobile|Architect|SRE|PhD|Research|Director|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist).*")) continue;
 
                 String url = jobLinks.nth(i).getAttribute("href");
                 if (url.startsWith("/")) url = processUrl(url, storedUrl);

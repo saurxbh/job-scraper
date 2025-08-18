@@ -32,7 +32,7 @@ public class AlertService {
             return;
         }
 
-        System.out.println(newJobs.size() + " new jobs found.");
+        System.out.println("New jobs found: " + newJobs.size());
 
         // 2. Build the alert message
         StringBuilder message = new StringBuilder("URGENT: These are the jobs posted in the last 30 minutes. Apply immediately!!!\n\n");
