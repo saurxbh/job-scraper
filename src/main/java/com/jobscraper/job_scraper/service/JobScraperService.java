@@ -36,6 +36,9 @@ public class JobScraperService {
             }
 
             browser.close();
+            List<Job> newJobs = jobRepository.findByAlertedFalse();
+            System.out.println("Scraping done. New jobs found: " + newJobs.size());
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

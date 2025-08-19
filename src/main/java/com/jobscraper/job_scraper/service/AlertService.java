@@ -32,7 +32,7 @@ public class AlertService {
             return;
         }
 
-        System.out.println("New jobs found: " + newJobs.size());
+        System.out.println("Sending alert for " + newJobs.size() + " new job(s)...");
 
         // 2. Build the alert message
         StringBuilder message = new StringBuilder("URGENT: These are the jobs posted in the last 30 minutes. Apply immediately!!!\n\n");
@@ -45,9 +45,11 @@ public class AlertService {
 
         // 3. Send notification (for now, just console)
         notificationService.notify(message.toString());
+        System.out.println("Alerting done.");
 
         // 4. Mark jobs as alerted
         newJobs.forEach(job -> job.setAlerted(true));
         jobRepository.saveAll(newJobs);
+        System.out.println("Jobs updated");
     }
 }
