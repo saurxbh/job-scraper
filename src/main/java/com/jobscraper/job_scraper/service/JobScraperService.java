@@ -51,7 +51,11 @@ public class JobScraperService {
             String linkSelector = company.getLinkSelector();
             System.out.println("Scraping: " + company.getName());
 
-            page.navigate(storedUrl);
+            Response response = page.navigate(storedUrl);
+            if (response.status() >= 400) {
+                System.out.println("Something went wrong. Response Status: " + response.status());
+                return;
+            }
 
             // Scroll to bottom to ensure lazy-loaded jobs appear
             int prevHeight = 0;
@@ -75,7 +79,7 @@ public class JobScraperService {
 
             for (int i = 0; i < jobCount; i++) {
                 String title = jobTitles.nth(i).innerText();
-                if (title.matches("(?i).*(Mobile|Architect|SRE|PhD|Research|Director|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist).*")) continue;
+                if (title.matches("(?i).*(Mobile|Architect|SRE|PhD|Research|Director|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist|Support|Spark|SAP|Appian|ODM).*")) continue;
 
                 String url = jobLinks.nth(i).getAttribute("href");
                 if (url.startsWith("/")) url = processUrl(url, storedUrl);
