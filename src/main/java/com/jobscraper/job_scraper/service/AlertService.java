@@ -50,6 +50,6 @@ public class AlertService {
         // 4. Mark jobs as alerted
         newJobs.forEach(job -> job.setAlerted(true));
         jobRepository.saveAll(newJobs);
-        System.out.println("Jobs updated");
+        System.out.println("Jobs updated.");
     }
 }
