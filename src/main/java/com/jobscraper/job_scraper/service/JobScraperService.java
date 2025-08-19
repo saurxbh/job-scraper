@@ -6,6 +6,7 @@ import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -60,8 +61,7 @@ public class JobScraperService {
                 page.waitForTimeout(1000); // give time for new jobs to load
             }
 
-            page.waitForLoadState(LoadState.NETWORKIDLE);
-            page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000));
+            page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
 
             // Example selectors - replace with custom per-company later
             Locator jobTitles = page.locator(textSelector);
