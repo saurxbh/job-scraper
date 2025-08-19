@@ -5,6 +5,7 @@ import com.jobscraper.job_scraper.entity.Job;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.LoadState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,6 @@ public class JobScraperService {
             System.out.println("Scraping: " + company.getName());
 
             page.navigate(storedUrl);
-            page.waitForSelector(textSelector);
 
             // Scroll to bottom to ensure lazy-loaded jobs appear
             int prevHeight = 0;
@@ -59,6 +59,9 @@ public class JobScraperService {
                 page.mouse().wheel(0, 2000);
                 page.waitForTimeout(1000); // give time for new jobs to load
             }
+
+            page.waitForLoadState(LoadState.NETWORKIDLE);
+            page.waitForSelector("a.stretched-link", new Page.WaitForSelectorOptions().setTimeout(60000));
 
             // Example selectors - replace with custom per-company later
             Locator jobTitles = page.locator(textSelector);
