@@ -61,7 +61,7 @@ public class JobScraperService {
             }
 
             page.waitForLoadState(LoadState.NETWORKIDLE);
-            page.waitForSelector("a.stretched-link", new Page.WaitForSelectorOptions().setTimeout(60000));
+            page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000));
 
             // Example selectors - replace with custom per-company later
             Locator jobTitles = page.locator(textSelector);
