@@ -7,6 +7,7 @@ import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.WaitUntilState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -51,7 +52,7 @@ public class JobScraperService {
             String linkSelector = company.getLinkSelector();
             System.out.println("Scraping: " + company.getName());
 
-            Response response = page.navigate(storedUrl);
+            Response response = page.navigate(storedUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
             if (response.status() >= 400) {
                 System.out.println("Something went wrong. Response Status: " + response.status());
                 return;
