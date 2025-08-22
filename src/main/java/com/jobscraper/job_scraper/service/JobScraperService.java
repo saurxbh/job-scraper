@@ -52,7 +52,7 @@ public class JobScraperService {
             String linkSelector = company.getLinkSelector();
             System.out.println("Scraping: " + company.getName());
 
-            Response response = page.navigate(storedUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+            Response response = page.navigate(storedUrl);
             if (response.status() >= 400) {
                 System.out.println("Something went wrong. Response Status: " + response.status());
                 return;
