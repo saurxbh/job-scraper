@@ -51,14 +51,14 @@ public class JobScraperService {
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
 
+        Response response = page.navigate(storedUrl);
+        if (response.status() >= 400) {
+            System.out.println("Something went wrong. Response Status: " + response.status());
+            return;
+        }
+
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                Response response = page.navigate(storedUrl);
-                if (response.status() >= 400) {
-                    System.out.println("Something went wrong. Response Status: " + response.status());
-                    return;
-                }
-
                 // Scroll to bottom to ensure lazy-loaded jobs appear
                 int prevHeight = 0;
                 while (true) {
@@ -98,20 +98,23 @@ public class JobScraperService {
                 return;
 
             } catch (TimeoutError t) {
-                System.out.println("Attempt " + attempt + " failed for " + company + ": " + t.getMessage());
+                if (!page.content().contains(textSelector)) {
+                    System.out.println("No matching jobs found.");
+                    return;
+                }
+                System.out.println("Attempt " + attempt + " failed for " + company);
                 if (attempt < 3) {
-                    System.out.println("Retrying in 30 seconds...");
-                    try {
-                        Thread.sleep(30000); // Wait 30 seconds before retry
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                    System.out.println("Retrying...");
                 } else {
                     System.out.println("Max retries reached for " + company + ". Skipping.");
                 }
             } catch (Exception e) {
-                System.err.println("Failed to scrape " + company.getCareerPageUrl());
+                System.out.println("Attempt " + attempt + " failed for " + company);
+                if (attempt < 3) {
+                    System.out.println("Retrying...");
+                } else {
+                    System.out.println("Max retries reached for " + company + ". Skipping.");
+                }
             }
         }
     }
