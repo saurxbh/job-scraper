@@ -46,59 +46,73 @@ public class JobScraperService {
     }
 
     private void scrapeCompany(Company company, Page page) {
-        try {
-            String storedUrl = company.getCareerPageUrl();
-            String textSelector = company.getTextSelector();
-            String linkSelector = company.getLinkSelector();
-            System.out.println("Scraping: " + company.getName());
+        String storedUrl = company.getCareerPageUrl();
+        String textSelector = company.getTextSelector();
+        String linkSelector = company.getLinkSelector();
+        System.out.println("Scraping: " + company.getName());
 
-            Response response = page.navigate(storedUrl);
-            if (response.status() >= 400) {
-                System.out.println("Something went wrong. Response Status: " + response.status());
-                return;
-            }
-
-            // Scroll to bottom to ensure lazy-loaded jobs appear
-            int prevHeight = 0;
-            while (true) {
-                int currHeight = (int) page.evaluate("() => document.body.scrollHeight");
-                if (currHeight == prevHeight) break; // no more content
-                prevHeight = currHeight;
-
-                page.mouse().wheel(0, 2000);
-                page.waitForTimeout(1000); // give time for new jobs to load
-            }
-
-            page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
-
-            // Example selectors - replace with custom per-company later
-            Locator jobTitles = page.locator(textSelector);
-            Locator jobLinks = page.locator(linkSelector);
-            int jobCount = jobTitles.count();
-            int linksCount = jobLinks.count();
-            System.out.println("Jobs found for " + company.getName() + ": " + jobCount + ", " + linksCount + " links.");
-
-            for (int i = 0; i < jobCount; i++) {
-                String title = jobTitles.nth(i).innerText();
-                if (title.matches("(?i).*(Mobile|Architect|SRE|PhD|Research|Director|President|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist|Support|Spark|SAP|Appian|ODM|Reliability).*")) continue;
-
-                String url = jobLinks.nth(i).getAttribute("href");
-                if (url.startsWith("/")) url = processUrl(url, storedUrl);
-
-                if (!jobRepository.existsByJobUrl(url)) {
-                    Job job = new Job();
-                    job.setCompany(company);
-                    job.setTitle(title);
-                    job.setJobUrl(url);
-                    //job.setScrapedAt(LocalDateTime.now());
-
-                    jobRepository.save(job);
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                Response response = page.navigate(storedUrl);
+                if (response.status() >= 400) {
+                    System.out.println("Something went wrong. Response Status: " + response.status());
+                    return;
                 }
-            }
 
-        } catch (Exception e) {
-            System.err.println("Failed to scrape " + company.getCareerPageUrl());
-            e.printStackTrace();
+                // Scroll to bottom to ensure lazy-loaded jobs appear
+                int prevHeight = 0;
+                while (true) {
+                    int currHeight = (int) page.evaluate("() => document.body.scrollHeight");
+                    if (currHeight == prevHeight) break; // no more content
+                    prevHeight = currHeight;
+
+                    page.mouse().wheel(0, 2000);
+                    page.waitForTimeout(1000); // give time for new jobs to load
+                }
+
+                page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
+
+                Locator jobTitles = page.locator(textSelector);
+                Locator jobLinks = page.locator(linkSelector);
+                int jobCount = jobTitles.count();
+                int linksCount = jobLinks.count();
+                System.out.println("Jobs found for " + company.getName() + ": " + jobCount + ", " + linksCount + " link(s).");
+
+                for (int i = 0; i < jobCount; i++) {
+                    String title = jobTitles.nth(i).innerText();
+                    if (title.matches("(?i).*(Mobile|Architect|SRE|PhD|Research|Director|President|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist|Support|Spark|SAP|Appian|ODM|Reliability).*"))
+                        continue;
+
+                    String url = jobLinks.nth(i).getAttribute("href");
+                    if (url.startsWith("/")) url = processUrl(url, storedUrl);
+
+                    if (!jobRepository.existsByJobUrl(url)) {
+                        Job job = new Job();
+                        job.setCompany(company);
+                        job.setTitle(title);
+                        job.setJobUrl(url);
+
+                        jobRepository.save(job);
+                    }
+                }
+                return;
+
+            } catch (TimeoutError t) {
+                System.out.println("Attempt " + attempt + " failed for " + company + ": " + t.getMessage());
+                if (attempt < 3) {
+                    System.out.println("Retrying in 30 seconds...");
+                    try {
+                        Thread.sleep(30000); // Wait 30 seconds before retry
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    System.out.println("Max retries reached for " + company + ". Skipping.");
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to scrape " + company.getCareerPageUrl());
+            }
         }
     }
 
