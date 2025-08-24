@@ -17,6 +17,9 @@ import java.util.List;
 @Service
 public class JobScraperService {
 
+    public static final String RESET = "\u001B[0m";
+    public static final String RED = "\u001B[31m";
+
     @Autowired
     private CompanyRepository companyRepository;
 
@@ -99,7 +102,7 @@ public class JobScraperService {
 
             } catch (TimeoutError t) {
                 if (!page.content().contains(textSelector)) {
-                    System.out.println("No matching jobs found.");
+                    System.out.println(RED + "No matching jobs found." + RESET);
                     return;
                 }
                 System.out.println("Attempt " + attempt + " failed for " + company);
