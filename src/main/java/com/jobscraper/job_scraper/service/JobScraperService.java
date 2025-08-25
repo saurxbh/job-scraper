@@ -59,7 +59,6 @@ public class JobScraperService {
             System.out.println("Something went wrong. Response Status: " + response.status());
             return;
         }
-        page.waitForTimeout(1000);
 
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
@@ -71,7 +70,7 @@ public class JobScraperService {
                     prevHeight = currHeight;
 
                     page.mouse().wheel(0, 2000);
-                    page.waitForTimeout(1000); // give time for new jobs to load
+                    page.waitForTimeout(2000); // give time for new jobs to load
                 }
 
                 page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
