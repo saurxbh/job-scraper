@@ -59,6 +59,7 @@ public class JobScraperService {
             System.out.println("Something went wrong. Response Status: " + response.status());
             return;
         }
+        page.waitForTimeout(1000);
 
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
