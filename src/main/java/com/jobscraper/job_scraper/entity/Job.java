@@ -2,6 +2,8 @@ package com.jobscraper.job_scraper.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class Job {
 
@@ -20,6 +22,8 @@ public class Job {
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean alerted;
+
+    private LocalDateTime createdAt;
 
     // Constructors
     public Job() {}
@@ -53,5 +57,13 @@ public class Job {
 
     public void setAlerted(boolean alerted) {
         this.alerted = alerted;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
