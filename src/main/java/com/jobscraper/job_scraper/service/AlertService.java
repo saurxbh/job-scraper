@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -45,7 +46,8 @@ public class AlertService {
 
         // 3. Send notification (for now, just console)
         notificationService.notify(message.toString());
-        System.out.println("Alerting done.");
+        LocalDateTime now = LocalDateTime.now();
+        System.out.println("Alerting done at " + now.getHour() + ":" + now.getMinute());
 
         // 4. Mark jobs as alerted
         newJobs.forEach(job -> job.setAlerted(true));

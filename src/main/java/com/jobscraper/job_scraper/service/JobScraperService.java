@@ -42,7 +42,8 @@ public class JobScraperService {
 
             browser.close();
             List<Job> newJobs = jobRepository.findByAlertedFalse();
-            System.out.println("Scraping done. New jobs found: " + newJobs.size());
+            LocalDateTime time = LocalDateTime.now();
+            System.out.println("Scraping done at " + time.getHour() + ":" + time.getMinute() + ". New jobs found: " + newJobs.size());
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -64,14 +65,23 @@ public class JobScraperService {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 // Scroll to bottom to ensure lazy-loaded jobs appear
-                int prevHeight = 0;
+                int prevHeight = -1;
+                int sameHeightCount = 0;
                 while (true) {
+                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+                    page.waitForTimeout(1000);
                     int currHeight = (int) page.evaluate("() => document.body.scrollHeight");
-                    if (currHeight == prevHeight) break; // no more content
+
+                    if (currHeight == prevHeight) {
+                        sameHeightCount++;
+                    } else {
+                        sameHeightCount = 0; // reset if page actually grew
+                    }
                     prevHeight = currHeight;
 
-                    page.mouse().wheel(0, 2000);
-                    page.waitForTimeout(2000); // give time for new jobs to load
+                    if (sameHeightCount >= 2) {
+                        break;
+                    }
                 }
 
                 page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
