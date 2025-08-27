@@ -1,9 +1,12 @@
 package com.jobscraper.job_scraper.service;
 
+import com.jobscraper.job_scraper.config.KafkaConfig;
 import com.jobscraper.job_scraper.entity.Job;
+import com.jobscraper.job_scraper.event.ScrapeCompletedEvent;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +26,8 @@ public class AlertService {
     }
 
     @Transactional
-    @Scheduled(fixedRate = 40 * 60 * 1000, initialDelay = 20 * 60 * 1000)
-    public void sendAlertsForNewJobs() {
+    @KafkaListener(topics = KafkaConfig.TOPIC, groupId = "job-alert-group")
+    public void sendAlertsForNewJobs(ScrapeCompletedEvent event) {
         // 1. Fetch jobs not yet alerted
         List<Job> newJobs = jobRepository.findByAlertedFalse();
 
