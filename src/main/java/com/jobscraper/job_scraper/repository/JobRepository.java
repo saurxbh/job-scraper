@@ -10,4 +10,7 @@ import java.util.List;
 public interface JobRepository extends JpaRepository<Job, Long> {
     boolean existsByJobUrl(String url);
     List<Job> findByAlertedFalse();
+
+    @org.springframework.data.jpa.repository.Query("select j.id from Job j where j.alerted = false")
+    List<Integer> findIdsByAlertedFalse();
 }

@@ -1,7 +1,9 @@
 package com.jobscraper.job_scraper.service;
 
+import com.jobscraper.job_scraper.config.KafkaConfig;
 import com.jobscraper.job_scraper.entity.Company;
 import com.jobscraper.job_scraper.entity.Job;
+import com.jobscraper.job_scraper.event.ScrapeCompletedEvent;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
@@ -9,6 +11,7 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.microsoft.playwright.options.WaitUntilState;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +30,9 @@ public class JobScraperService {
     @Autowired
     private JobRepository jobRepository;
 
+    @Autowired
+    private KafkaTemplate<String, ScrapeCompletedEvent> kafkaTemplate;
+
     @Scheduled(fixedRate = 40 * 60 * 1000)
     public void scrapeAllCompanies() {
         List<Company> companies = companyRepository.findAll();
@@ -42,8 +48,19 @@ public class JobScraperService {
 
             browser.close();
             List<Job> newJobs = jobRepository.findByAlertedFalse();
+            List<Integer> newJobIds = jobRepository.findIdsByAlertedFalse();
             LocalDateTime time = LocalDateTime.now();
             System.out.println("Scraping done at " + time.getHour() + ":" + time.getMinute() + ". New jobs found: " + newJobs.size());
+
+            if (!newJobs.isEmpty()) {
+                ScrapeCompletedEvent event = new ScrapeCompletedEvent(
+                        time.toString(),
+                        LocalDateTime.now(),
+                        newJobs.size(),
+                        newJobIds
+                );
+                kafkaTemplate.send(KafkaConfig.TOPIC, event);
+            }
 
         } catch (Exception e) {
             throw new RuntimeException(e);
