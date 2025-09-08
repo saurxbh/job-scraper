@@ -33,7 +33,7 @@ public class JobScraperService {
     @Autowired
     private KafkaTemplate<String, ScrapeCompletedEvent> kafkaTemplate;
 
-    @Scheduled(fixedRate = 40 * 60 * 1000)
+    @Scheduled(fixedRate = 20 * 60 * 1000)
     public void scrapeAllCompanies() {
         List<Company> companies = companyRepository.findAll();
         System.out.println("Scraping for " + companies.size() + " companies.");
@@ -63,7 +63,7 @@ public class JobScraperService {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.println(RED + "Error while scraping. " + RESET);
         }
     }
 
