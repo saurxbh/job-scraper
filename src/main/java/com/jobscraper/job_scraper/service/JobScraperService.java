@@ -50,7 +50,9 @@ public class JobScraperService {
             List<Job> newJobs = jobRepository.findByAlertedFalse();
             List<Integer> newJobIds = jobRepository.findIdsByAlertedFalse();
             LocalDateTime time = LocalDateTime.now();
-            System.out.println("Scraping done at " + time.getHour() + ":" + time.getMinute() + ". New jobs found: " + newJobs.size());
+            String minutes = Integer.toString(time.getMinute());
+            minutes = minutes.length() == 1 ? '0' + minutes : minutes;
+            System.out.println("Scraping done at " + time.getHour() + ":" + minutes + ". New jobs found: " + newJobs.size());
 
             if (!newJobs.isEmpty()) {
                 ScrapeCompletedEvent event = new ScrapeCompletedEvent(
@@ -72,6 +74,7 @@ public class JobScraperService {
         String textSelector = company.getTextSelector();
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
+        if (company.getName().equals("Verizon")) return;
 
         Response response = page.navigate(storedUrl);
         if (response.status() >= 400) {
@@ -81,25 +84,6 @@ public class JobScraperService {
 
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                // Scroll to bottom to ensure lazy-loaded jobs appear
-                int prevHeight = -1;
-                int sameHeightCount = 0;
-                while (true) {
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-                    page.waitForTimeout(1000);
-                    int currHeight = (int) page.evaluate("() => document.body.scrollHeight");
-
-                    if (currHeight == prevHeight) {
-                        sameHeightCount++;
-                    } else {
-                        sameHeightCount = 0; // reset if page actually grew
-                    }
-                    prevHeight = currHeight;
-
-                    if (sameHeightCount >= 2) {
-                        break;
-                    }
-                }
 
                 page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
 
