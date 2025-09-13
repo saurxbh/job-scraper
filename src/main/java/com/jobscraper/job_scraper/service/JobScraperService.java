@@ -2,26 +2,20 @@ package com.jobscraper.job_scraper.service;
 
 import com.jobscraper.job_scraper.config.KafkaConfig;
 import com.jobscraper.job_scraper.entity.Company;
-import com.jobscraper.job_scraper.entity.FilterSpec;
 import com.jobscraper.job_scraper.entity.Job;
 import com.jobscraper.job_scraper.event.ScrapeCompletedEvent;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.LoadState;
-import com.microsoft.playwright.options.SelectOption;
 import com.microsoft.playwright.options.WaitForSelectorState;
-import com.microsoft.playwright.options.WaitUntilState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.FileWriter;
-import java.sql.SQLOutput;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class JobScraperService {
@@ -90,7 +84,6 @@ public class JobScraperService {
 
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                if (company.isDynamic()) applyFilters(company, page);
                 page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
                 scrollToBottom(page);
 
@@ -142,73 +135,6 @@ public class JobScraperService {
         }
     }
 
-    private void applyFilters(Company company, Page page) {
-        Map<String, FilterSpec> cfg = company.getFilterConfig();
-        if (cfg == null || cfg.isEmpty()) return;
-        boolean applyButtonPresent = false;
-        String applyButtonSelector = null;
-
-        for (Map.Entry<String, FilterSpec> e : cfg.entrySet()) {
-            String label = e.getKey();
-            FilterSpec spec = e.getValue();
-
-            if ("Apply Filters".equalsIgnoreCase(label)) {
-                applyButtonPresent = true;
-                applyButtonSelector = spec.selector();
-                continue;
-            }
-
-            String selector = spec.selector();
-            Locator control = page.locator(selector);
-
-            switch (spec.type()) {
-                case SELECT -> {
-                    String tagName = control.evaluate("el => el.tagName").toString();
-                    for (String v : spec.permissibleValues()) {
-                        if ("SELECT".equalsIgnoreCase(tagName)) {
-                            // Real <select> element
-                            try {
-                                control.selectOption(new SelectOption().setLabel(v));
-                            } catch (Exception ignore) {
-                                control.selectOption(new SelectOption().setValue(v));
-                            }
-                        } else {
-                            System.out.println(v);
-                            control.click();
-                            Locator option = page.locator(".option",
-                                    new Page.LocatorOptions().setHasText(v));
-                            option.click();
-                        }
-                    }
-                }
-                case INPUT -> {
-                    String v = spec.permissibleValues().isEmpty() ? "" : spec.permissibleValues().get(0);
-                    System.out.println(v);
-                    control.fill("");
-                    control.type(v);
-                    control.press("Enter");
-                }
-                case CHECKBOX -> {
-                    boolean shouldCheck = spec.permissibleValues().stream().findFirst()
-                            .map(s -> s.equalsIgnoreCase("true")).orElse(true);
-                    boolean isChecked = Boolean.TRUE.equals(control.isChecked());
-                    if (shouldCheck && !isChecked) control.check();
-                    if (!shouldCheck && isChecked)  control.uncheck();
-                }
-                case BUTTON -> {
-                    control.click();
-                }
-                default -> System.out.println("Unknown filter type.");
-            }
-        }
-        if (applyButtonPresent && applyButtonSelector != null) {
-            page.locator(applyButtonSelector).click();
-            page.waitForLoadState(LoadState.NETWORKIDLE);
-            System.out.println("Filters applied");
-        }
-
-    }
-
     private String processUrl(String url, String storedUrl) {
         int idx = storedUrl.indexOf("/", storedUrl.indexOf("//") + 2);
         String baseUrl = idx != -1 ? storedUrl.substring(0, idx) : storedUrl;
@@ -220,7 +146,7 @@ public class JobScraperService {
 
     private void handleCookieBanner(Page page) {
         try {
-            Locator accept = page.locator("text=Accept Cookies"); // or a CSS selector for the button
+            Locator accept = page.locator("text=Accept"); // or a CSS selector for the button
             if (accept.isVisible()) {
                 accept.click();
                 System.out.println("Cookie banner accepted.");
@@ -236,24 +162,17 @@ public class JobScraperService {
         int sameHeightCount = 0;
 
         while (true) {
-            // Scroll down
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-
-            // Wait a little to let new content load (important if jobs are lazy-loaded)
             page.waitForTimeout(1000);
 
-            // Check current page height
             int currHeight = (int) page.evaluate("() => document.body.scrollHeight");
-
             if (currHeight == prevHeight) {
                 sameHeightCount++;
             } else {
                 sameHeightCount = 0; // reset if new content was added
             }
-
             prevHeight = currHeight;
 
-            // Break after seeing no growth for 2 consecutive checks
             if (sameHeightCount >= 2) {
                 break;
             }
