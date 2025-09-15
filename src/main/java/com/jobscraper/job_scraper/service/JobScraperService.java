@@ -2,6 +2,7 @@ package com.jobscraper.job_scraper.service;
 
 import com.jobscraper.job_scraper.config.KafkaConfig;
 import com.jobscraper.job_scraper.entity.Company;
+import com.jobscraper.job_scraper.entity.FilterSpec;
 import com.jobscraper.job_scraper.entity.Job;
 import com.jobscraper.job_scraper.event.ScrapeCompletedEvent;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class JobScraperService {
@@ -73,7 +75,6 @@ public class JobScraperService {
         String textSelector = company.getTextSelector();
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
-        if (company.isDynamic()) return;
 
         Response response = page.navigate(storedUrl);
         if (response.status() >= 400) {
@@ -85,6 +86,7 @@ public class JobScraperService {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
+                applyFilters(page, company);
                 scrollToBottom(page);
 
                 Locator jobTitles = page.locator(textSelector);
@@ -154,6 +156,29 @@ public class JobScraperService {
         } catch (Exception e) {
             // ignore if not present
             System.out.println("No cookie banner.");
+        }
+    }
+
+    private void applyFilters(Page page, Company company) {
+        Map<String, FilterSpec> cfg = company.getFilterConfig();
+        if (cfg == null || cfg.isEmpty()) return;
+
+        for (Map.Entry<String, FilterSpec> e : cfg.entrySet()) {
+            String label = e.getKey();
+            FilterSpec spec = e.getValue();
+            if (spec == null || spec.type() == null) continue;
+
+            switch (spec.type()) {
+                case BUTTON -> {
+                    String sel = spec.selector();
+                    System.out.println(sel);
+                    Locator button = page.locator(sel).first();
+
+                    button.click();
+                }
+                case INPUT -> {}
+                default -> {}
+            }
         }
     }
 

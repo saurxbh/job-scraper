@@ -4,5 +4,6 @@ public enum FilterType {
     INPUT,
     SELECT,
     CHECKBOX,
-    BUTTON
+    BUTTON,
+    RADIO
 }
