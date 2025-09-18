@@ -3,11 +3,13 @@ package com.jobscraper.job_scraper.service;
 import com.jobscraper.job_scraper.config.KafkaConfig;
 import com.jobscraper.job_scraper.entity.Company;
 import com.jobscraper.job_scraper.entity.FilterSpec;
+import com.jobscraper.job_scraper.entity.FilterType;
 import com.jobscraper.job_scraper.entity.Job;
 import com.jobscraper.job_scraper.event.ScrapeCompletedEvent;
 import com.jobscraper.job_scraper.repository.CompanyRepository;
 import com.jobscraper.job_scraper.repository.JobRepository;
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.SelectOption;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -75,6 +77,7 @@ public class JobScraperService {
         String textSelector = company.getTextSelector();
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
+        //if (company.getName().equalsIgnoreCase("verizon")) return;
 
         Response response = page.navigate(storedUrl);
         if (response.status() >= 400) {
@@ -86,7 +89,7 @@ public class JobScraperService {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 page.waitForSelector(textSelector, new Page.WaitForSelectorOptions().setTimeout(60000).setState(WaitForSelectorState.VISIBLE));
-                applyFilters(page, company);
+                if (company.isDynamic()) applyFilters(page, company);
                 scrollToBottom(page);
 
                 Locator jobTitles = page.locator(textSelector);
@@ -160,23 +163,39 @@ public class JobScraperService {
     }
 
     private void applyFilters(Page page, Company company) {
-        Map<String, FilterSpec> cfg = company.getFilterConfig();
+        List<FilterSpec> cfg = company.getFilterConfig();
         if (cfg == null || cfg.isEmpty()) return;
 
-        for (Map.Entry<String, FilterSpec> e : cfg.entrySet()) {
-            String label = e.getKey();
-            FilterSpec spec = e.getValue();
-            if (spec == null || spec.type() == null) continue;
+        for (FilterSpec e : cfg) {
+            String label = e.label();
+            FilterType type = e.type();
+            String selector = e.selector();
+            List<String> permissibleValues = e.permissibleValues();
 
-            switch (spec.type()) {
+            switch (type) {
                 case BUTTON -> {
-                    String sel = spec.selector();
-                    System.out.println(sel);
-                    Locator button = page.locator(sel).first();
-
+                    Locator button = page.locator(selector).first();
                     button.click();
                 }
-                case INPUT -> {}
+                case SELECT -> {
+                    Locator dropdown = page.locator(selector).first();
+                    String tag = dropdown.evaluate("el => el.tagName").toString();
+
+                    for (String v : permissibleValues) {
+                        if ("select".equalsIgnoreCase(tag)) {
+                            try {
+                                dropdown.selectOption(new SelectOption().setLabel(v));
+                            } catch (Exception ignore) {
+                                dropdown.selectOption(v);
+                            }
+                        } else {
+                            // for else, not taking comma separated values as is as is the case in the if block, passing selectors here.
+//                            dropdown.click();
+//                            Locator option = page.locator(v).first();
+//                            option.click();
+                        }
+                    }
+                }
                 default -> {}
             }
         }
