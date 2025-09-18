@@ -50,7 +50,9 @@ public class AlertService {
         // 3. Send notification (for now, just console)
         notificationService.notify(message.toString());
         LocalDateTime now = LocalDateTime.now();
-        System.out.println("Alerting done at " + now.getHour() + ":" + now.getMinute());
+        String minutes = Integer.toString(now.getMinute());
+        minutes = minutes.length() == 1 ? '0' + minutes : minutes;
+        System.out.println("Alerting done at " + now.getHour() + ":" + minutes);
 
         // 4. Mark jobs as alerted
         newJobs.forEach(job -> job.setAlerted(true));
