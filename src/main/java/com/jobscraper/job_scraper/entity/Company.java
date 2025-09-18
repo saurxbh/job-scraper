@@ -5,8 +5,8 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Company {
@@ -30,12 +30,12 @@ public class Company {
     @JsonProperty("filters")
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "filter_config", columnDefinition = "jsonb", nullable = false)
-    private Map<String, FilterSpec> filterConfig = new HashMap<>();
+    private List<FilterSpec> filterConfig = new ArrayList<>();
 
     // Constructors
     public Company() {}
 
-    public Company(String name, String careerPageUrl, String textSelector, String linkSelector, boolean dynamic, Map<String, FilterSpec> filterConfig) {
+    public Company(String name, String careerPageUrl, String textSelector, String linkSelector, boolean dynamic, List<FilterSpec> filterConfig) {
         this.name = name;
         this.careerPageUrl = careerPageUrl;
         this.textSelector = textSelector;
@@ -81,11 +81,11 @@ public class Company {
         this.dynamic = dynamic;
     }
 
-    public Map<String, FilterSpec> getFilterConfig() {
+    public List<FilterSpec> getFilterConfig() {
         return filterConfig;
     }
 
-    public void setFilterConfig(Map<String, FilterSpec> filterConfig) {
+    public void setFilterConfig(List<FilterSpec> filterConfig) {
         this.filterConfig = filterConfig;
     }
 
