@@ -18,8 +18,8 @@ import org.springframework.stereotype.Service;
 
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class JobScraperService {
@@ -38,6 +38,7 @@ public class JobScraperService {
 
     @Scheduled(fixedRate = 20 * 60 * 1000)
     public void scrapeAllCompanies() {
+        System.out.println("Scraping started at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
         List<Company> companies = companyRepository.findAll();
         System.out.println("Scraping for " + companies.size() + " companies.");
 
@@ -53,9 +54,7 @@ public class JobScraperService {
             List<Job> newJobs = jobRepository.findByAlertedFalse();
             List<Integer> newJobIds = jobRepository.findIdsByAlertedFalse();
             LocalDateTime time = LocalDateTime.now();
-            String minutes = Integer.toString(time.getMinute());
-            minutes = minutes.length() == 1 ? '0' + minutes : minutes;
-            System.out.println("Scraping done at " + time.getHour() + ":" + minutes + ". New jobs found: " + newJobs.size());
+            System.out.println("Scraping done at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")) + ". New jobs found: " + newJobs.size());
 
             if (!newJobs.isEmpty()) {
                 ScrapeCompletedEvent event = new ScrapeCompletedEvent(
@@ -77,7 +76,7 @@ public class JobScraperService {
         String textSelector = company.getTextSelector();
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
-        //if (company.getName().equalsIgnoreCase("verizon")) return;
+        //if (!company.getName().equalsIgnoreCase("the home depot")) return;
 
         Response response = page.navigate(storedUrl);
         if (response.status() >= 400) {
@@ -100,10 +99,12 @@ public class JobScraperService {
 
                 for (int i = 0; i < jobCount; i++) {
                     String title = jobTitles.nth(i).innerText();
+                    //System.out.println(title);
                     if (title.matches("(?i).*(Infrastructure|Mobile|Architect|SRE|PhD|Research|Director|President|Principal|Principle|Staff|Lead|VP|Manager|iOS|Kotlin|Android|Head|Network|Machine|ML|AI|Distinguished|Security|Strategist|Support|Spark|SAP|Appian|ODM|Reliability|Hardware|Firmware).*"))
                         continue;
 
-                    String url = jobLinks.nth(i).getAttribute("href");
+                    String attribute = company.getName().equalsIgnoreCase("sofi") ? "data-link" : "href";
+                    String url = jobLinks.nth(i).getAttribute(attribute);
                     if (url.startsWith("/")) url = processUrl(url, storedUrl);
 
                     if (!jobRepository.existsByJobUrl(url)) {
