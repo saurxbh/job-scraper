@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -38,7 +39,8 @@ public class JobScraperService {
 
     @Scheduled(fixedRate = 20 * 60 * 1000)
     public void scrapeAllCompanies() {
-        System.out.println("Scraping started at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
+        LocalDateTime start = LocalDateTime.now();
+        System.out.println("Scraping started at " + start.format(DateTimeFormatter.ofPattern("HH:mm")));
         List<Company> companies = companyRepository.findAll();
         System.out.println("Scraping for " + companies.size() + " companies.");
 
@@ -53,12 +55,14 @@ public class JobScraperService {
             browser.close();
             List<Job> newJobs = jobRepository.findByAlertedFalse();
             List<Integer> newJobIds = jobRepository.findIdsByAlertedFalse();
-            LocalDateTime time = LocalDateTime.now();
-            System.out.println("Scraping done at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")) + ". New jobs found: " + newJobs.size());
+            LocalDateTime end = LocalDateTime.now();
+            System.out.println("Scraping done at " + end.format(DateTimeFormatter.ofPattern("HH:mm"))
+                    + ". Time elapsed: " + Duration.between(start, end).toMinutes()
+                    + ". New jobs found: " + newJobs.size());
 
             if (!newJobs.isEmpty()) {
                 ScrapeCompletedEvent event = new ScrapeCompletedEvent(
-                        time.toString(),
+                        end.toString(),
                         LocalDateTime.now(),
                         newJobs.size(),
                         newJobIds
@@ -76,7 +80,7 @@ public class JobScraperService {
         String textSelector = company.getTextSelector();
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
-        //if (!company.getName().equalsIgnoreCase("the home depot")) return;
+        //if (!company.getName().equalsIgnoreCase("honeywell")) return;
 
         Response response = page.navigate(storedUrl);
         if (response.status() >= 400) {
