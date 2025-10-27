@@ -39,6 +39,11 @@ public class JobScraperService {
 
     @Scheduled(fixedRate = 20 * 60 * 1000)
     public void scrapeAllCompanies() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         LocalDateTime start = LocalDateTime.now();
         System.out.println("Scraping started at " + start.format(DateTimeFormatter.ofPattern("HH:mm")));
         List<Company> companies = companyRepository.findAll();
@@ -58,7 +63,7 @@ public class JobScraperService {
             LocalDateTime end = LocalDateTime.now();
             System.out.println("Scraping done at " + end.format(DateTimeFormatter.ofPattern("HH:mm"))
                     + ". Time elapsed: " + Duration.between(start, end).toMinutes()
-                    + ". New jobs found: " + newJobs.size());
+                    + " minutes. New jobs found: " + newJobs.size());
 
             if (!newJobs.isEmpty()) {
                 ScrapeCompletedEvent event = new ScrapeCompletedEvent(
@@ -80,7 +85,10 @@ public class JobScraperService {
         String textSelector = company.getTextSelector();
         String linkSelector = company.getLinkSelector();
         System.out.println("Scraping: " + company.getName());
-        //if (!company.getName().equalsIgnoreCase("honeywell")) return;
+        if (company.getName().equalsIgnoreCase("united healthcare")
+                || company.getName().equalsIgnoreCase("tesla")
+                || company.getName().equalsIgnoreCase("northwestern mutual")
+                || company.getName().equalsIgnoreCase("jpmc")) return;
 
         Response response = page.navigate(storedUrl);
         if (response.status() >= 400) {
